@@ -1,47 +1,47 @@
 import tkinter as tk
 from tkinter import ttk
-from ui.local_processing_tab import create_tab_local
-from ui.settings_tab import create_tab_settings
 from ui.log_window import LogWindow
+from ui.local_processing_tab import LocalProcessingTab
+from ui.settings_tab import SettingsTab
+from config.decrypt_config import ConfigDecryptor, key
 
+class ImageProcessorApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Image Processor")
+        self.root.geometry("700x400")
+        
+        self.tab_parent = ttk.Notebook(self.root)
+        self.log_window = None
 
-from decrypt_config import decrypt_config, key
+        self.local_processing_tab = LocalProcessingTab(self.tab_parent, "Local Processing", self.open_log_window)
+        self.settings_tab = SettingsTab(self.tab_parent, "Settings")
 
-try:
-    config = decrypt_config(key)
-    wc_url = config['url']
-    wc_consumer_key = config['consumer_key']
-    wc_consumer_secret = config['consumer_secret']
-    wp_username = config['username']
-    wp_password = config['password']
+        self.tab_parent.pack(expand=True, fill='both')
 
-    # Now use these variables to create your WooCommerce API instance
+    def open_log_window(self):
+        if self.log_window is None or not self.log_window.winfo_exists():
+            self.log_window = LogWindow(self.root)
+        else:
+            self.log_window.lift()
 
-except FileNotFoundError as e:
-    print(e)
-    # Handle the missing file case, e.g., by prompting the user to create it
-except Exception as e:
-    print(f"An error occurred: {e}")
-    # Handle other potential errors
-log_window = None
-
-def open_log_window():
-    global log_window
-    if log_window is None or not log_window.winfo_exists():
-        log_window = LogWindow(window)
-    else:
-        log_window.lift()
+    def run(self):
+        self.root.mainloop()
 
 if __name__ == "__main__":
-    window = tk.Tk()
-    window.title("Image Processor")
-    window.geometry("700x400")
+    try:
+        decryptor = ConfigDecryptor(key)
+        config = decryptor.decrypt()
+        wc_url = config['url']
+        wc_consumer_key = config['consumer_key']
+        wc_consumer_secret = config['consumer_secret']
+        wp_username = config['username']
+        wp_password = config['password']
+    except FileNotFoundError as e:
+        print(f"File not found: {e}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
-    tab_parent = ttk.Notebook(window)
-
-    create_tab_local(tab_parent, "Local Processing", open_log_window)
-    create_tab_settings(tab_parent, "Settings")
-
-    tab_parent.pack(expand=True, fill='both')
-
-    window.mainloop()
+    root = tk.Tk()
+    app = ImageProcessorApp(root)
+    app.run()

@@ -23,7 +23,8 @@ def get_first_image_path():
                 return os.path.join(root, file)
     return None
 
-def process_directory_with_logging(additional_name, is_checked, log, update_previews):
+def process_directory_with_logging(selected_directory: str, additional_name: str = '', is_checked: bool = False, log = None, update_previews = None):
+    print(f"is_checked: {is_checked}")
     if not selected_directory:
         messagebox.showwarning("No Directory", "Please select a directory.")
         return
@@ -55,13 +56,10 @@ def process_directory_with_logging(additional_name, is_checked, log, update_prev
         output_path = os.path.join(output_directory, os.path.relpath(file_path, selected_directory))
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         resize_image(file_path, output_path, additional_name)
-        
-        # with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as temp_file:
-        #     temp_output_path = temp_file.name
-        #     resize_image(file_path, temp_output_path, additional_name)
-        #     update_previews(file_path, temp_output_path)
-        
+
         if os.path.exists(file_path) and is_checked:
+            if log:
+                log(f"removing: {file_path}")
             os.remove(file_path)
         if log:
             log(f"Processed: {file_path}")

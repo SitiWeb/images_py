@@ -1,59 +1,48 @@
-Image Processing Application
+Image Processing Application Documentation
+Overview
 
-This application is a graphical user interface (GUI) tool designed for processing images either from a local directory or from a WooCommerce product catalog. It supports resizing images, renaming them based on customizable templates, and uploading them to a WooCommerce site.
-Features
-
-    Resize images to specified dimensions.
-    Rename images using customizable templates with placeholders for various attributes.
-    Upload processed images to WooCommerce.
-    Process images from a local directory or WooCommerce products.
-
+This Image Processing Application provides a GUI for selecting directories containing image files, setting canvas sizes, adding suffixes to filenames, and processing images. It logs all found images, displays how many images were found, and provides previews of the first image before and after processing.
 Prerequisites
 
-    Python 3.10 or later
-
-    Required Python Packages
-
-    You can install the required packages using pip:
+    Python 3.10+: Ensure Python is installed on your machine.
+    Tkinter: This should come with Python, but ensure it's installed.
+    Pillow: For image handling. Install via pip:
 
     sh
 
-    pip install -r requirements.txt
+    pip install pillow
 
-    ImageMagick
+    Additional Libraries: Ensure you have any additional libraries your utility functions (file_operations, image_processing) depend on.
 
-    ImageMagick is required for image processing. You can download and install it from ImageMagick's official website.
+Application Setup
 
-    WooCommerce API Credentials
-
-    You need to have WooCommerce API credentials to interact with the WooCommerce site. These include the URL, consumer key, consumer secret, username, and password.
-
-Setting Up
-
-    Clone the Repository
-
-    Clone this repository to your local machine:
+    Install Required Packages:
 
     sh
 
-git clone https://github.com/your-username/image-processing-app.git
-cd image-processing-app
+pip install pillow
 
-Install Dependencies
+Directory Structure:
+Ensure your project directory looks something like this:
 
-Install the required Python packages:
+arduino
 
-sh
+    image-processor/
+    ├── ui/
+    │   └── local_processing_tab.py
+    ├── utils/
+    │   ├── file_operations.py
+    │   └── image_processing.py
+    └── main.py
 
-    pip install -r requirements.txt
-
-    Configure WooCommerce API Credentials
-
-    Run the application and navigate to the Settings tab to enter and save your WooCommerce API credentials.
+    Script Files:
+        main.py: The main entry point of the application containing the script provided above.
+        file_operations.py: Contains browse_directory and other directory-related utility functions.
+        image_processing.py: Contains set_canvas_size and other image processing utility functions.
 
 Running the Application
 
-Run the main application script:
+To run the application, navigate to the project directory and execute:
 
 sh
 
@@ -61,75 +50,23 @@ python main.py
 
 Creating an Executable
 
-To create a standalone executable from this project, you can use PyInstaller. Follow the steps below:
+To create an executable for this application, you can use pyinstaller. Follow the steps below:
 
-    Install PyInstaller
-
-    You can install PyInstaller using pip:
+    Install PyInstaller:
 
     sh
 
 pip install pyinstaller
 
-Generate the Executable
-
-Navigate to the project directory and run PyInstaller:
+Create the Executable:
+Navigate to the directory containing your main.py script and run:
 
 sh
 
-    pyinstaller --onefile --noconsole main.py
+pyinstaller --onefile --windowed main.py
 
-    Find the Executable
+    --onefile: Packages everything into a single executable file.
+    --windowed: Ensures the console window does not appear when running the GUI application.
 
-    After PyInstaller finishes, you can find the executable in the dist directory.
-
-File Structure
-
-    main.py: Entry point for the application.
-    api/: Contains the woocommerce.py file for interacting with WooCommerce API.
-    utils/: Contains utility scripts for file operations and image processing.
-    ui/: Contains the UI components for the application.
-    config.enc: Encrypted file storing WooCommerce API credentials.
-
-Requirements
-
-Create a requirements.txt file with the following content:
-
-tk
-Pillow
-requests
-woocommerce
-cryptography
-pyinstaller
-
-Usage
-
-    Select Source Type
-        Choose between local directory and WooCommerce product.
-
-    Set Canvas Size
-        Specify the dimensions to resize the images.
-
-    Filename Template
-        Define a template for renaming the images using placeholders like {name}, {sku}, {width}, {height}.
-
-    Start Processing
-        Click the "Start Processing" button to process the images. The log will appear in a separate window.
-
-Notes
-
-    Ensure ImageMagick is correctly installed and added to your system's PATH.
-    The application uses the cryptography library to encrypt WooCommerce API credentials for security.
-
-Support
-
-If you encounter any issues or have questions, feel free to open an issue in the repository or contact the maintainer.
-License
-
-This project is licensed under the MIT License.
-Acknowledgements
-
-    ImageMagick
-    WooCommerce
-
-With this information, you should be able to set up, run, and create an executable for the Image Processing Application. Enjoy processing your images with ease!
+Locate the Executable:
+After running the command, you will find the executable in the dist folder within your project directory.

@@ -1,16 +1,17 @@
-import tkinter as tk
-from tkinter.scrolledtext import ScrolledText
+from tkinter import Toplevel, Text
 
-class LogWindow(tk.Toplevel):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.title("Processing Log")
-        self.geometry("600x400")
-        self.log_text = ScrolledText(self, state='disabled', wrap='word')
-        self.log_text.pack(expand=True, fill='both')
+class LogWindow(Toplevel):
+    def __init__(self, master=None, **kwargs):
+        super().__init__(master, **kwargs)
+        self.title("Log Window")
+        self.geometry("500x300")
+        self.text = Text(self)
+        self.text.pack(expand=True, fill='both')
+        self.protocol("WM_DELETE_WINDOW", self.hide)
 
     def log(self, message):
-        self.log_text.config(state='normal')
-        self.log_text.insert(tk.END, message + "\n")
-        self.log_text.see(tk.END)
-        self.log_text.config(state='disabled')
+        self.text.insert('end', message + '\n')
+        self.text.see('end')
+
+    def hide(self):
+        self.withdraw()
