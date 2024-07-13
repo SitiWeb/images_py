@@ -1,0 +1,6 @@
+/config.enc
+/__pycache__
+*/__pycache__
+/build
+/dist
+/temp
