@@ -2,7 +2,7 @@ import os
 import shutil
 from tkinter import filedialog, messagebox
 from utils.image_processing import ImageProcessor
-
+from pprint import pprint
 
 class FileProcessor:
     """
@@ -134,17 +134,44 @@ class FileProcessor:
             log (function): The log function to use.
         """
         image = ImageProcessor()
+        image.set_background_color(options.get("background_color", "transparent"))
+        image.set_image_size(options.get("image_size", "contain"))
         for file_path in image_paths:
-            output_path = os.path.join(
-                output_directory, os.path.relpath(
-                    file_path, self.selected_directory)
-            )
+            # output_path = os.path.join(
+            #     output_directory, os.path.relpath(
+            #         file_path, self.selected_directory)
+            # )
+            output_path = self.generate_output_path(output_directory, file_path, options)
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            self.log_message(f"Running: {file_path}", log)
             image.resize_image(
-                file_path, output_path, options.get("additional_name", "")
+                file_path, output_path, options 
             )
 
-            if os.path.exists(file_path) and options.get("is_checked", False):
+            if os.path.exists(file_path) and options.get("delete_images", False):
                 self.log_message(f"Removing: {file_path}", log)
                 os.remove(file_path)
             self.log_message(f"Processed: {file_path}", log)
+
+    def generate_output_path(self, output_directory, file_path, options, product = None):
+        """
+        Generate the output path for resized images based on a template.
+
+
+        Returns:
+            str: The generated output path.
+        """
+        sku = slug = title = ""
+        name, ext = os.path.splitext(os.path.basename(file_path))
+        width = options.get("canvas_width")
+        height = options.get("canvas_height")
+        if product:
+            sku = product.get("sku", "")
+            slug = product.get("name", "")
+            title = product.get("slug", "")
+     
+        new_filename = options.get('template', '{name}').format(
+            name=name, sku=sku, width=width, height=height, slug=slug, title=title
+        )
+        pprint(new_filename)
+        return os.path.join(output_directory, new_filename + ext)
