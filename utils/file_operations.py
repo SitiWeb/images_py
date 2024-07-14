@@ -11,6 +11,7 @@ class FileProcessor:
     """
 
     def __init__(self):
+        self.selected_file = ""
         self.selected_directory = ""
 
     def browse_directory(self):
@@ -23,6 +24,16 @@ class FileProcessor:
         self.selected_directory = filedialog.askdirectory()
         return self.selected_directory
 
+    def browse_files(self):
+        """
+        Open a dialog to select a directory.
+
+        Returns:
+            str: The selected directory path.
+        """
+        self.selected_file = filedialog.askopenfilename()
+        return self.selected_file
+
     def get_first_image_path(self):
         """
         Get the path of the first image in the selected directory.
@@ -30,6 +41,9 @@ class FileProcessor:
         Returns:
             str: The path to the first image, or None if no images found.
         """
+        if self.selected_file:
+            return self.selected_file
+        
         if not self.selected_directory:
             return None
 
@@ -158,6 +172,31 @@ class FileProcessor:
                 self.log_message(f"Removing: {file_path}", log)
                 os.remove(file_path)
             self.log_message(f"Processed: {file_path}", log)
+
+    def proces_single_image(self, options):
+        """
+        Process images in the selected directory with logging.
+
+        Args:
+            options (dict): Processing options.
+        """
+        if not self.selected_file:
+            messagebox.showwarning(
+                "No File", "Please select a file.")
+            return
+        log = options.get("log_message", None)
+        self.log_message(
+            f"Processing started for file: {self.selected_file}", log
+        )
+
+        output_directory = self.create_output_directory(log)
+        image_paths = [self.selected_file]
+
+        self.process_images(image_paths, output_directory, options, log)
+
+        messagebox.showinfo("Process Complete",
+                            "Image processing is complete.")
+        self.log_message("Processing complete.", log)
 
     def generate_output_path(self, output_directory, file_path, options, product = None):
         """

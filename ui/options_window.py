@@ -1,7 +1,8 @@
-import tkinter as tk
-from tkinter import ttk, colorchooser, messagebox
-from pprint import pprint
-class OptionsWindow(tk.Toplevel):
+import customtkinter as ctk
+from tkinter import colorchooser, messagebox
+
+
+class OptionsWindow(ctk.CTkToplevel):
     def __init__(self, parent, apply_callback, current_options):
         super().__init__(parent)
         self.title("Options")
@@ -12,6 +13,8 @@ class OptionsWindow(tk.Toplevel):
         self.inputs = {}
 
         self.setup_ui()
+        self.attributes('-topmost', True)  # Ensure the window stays on top
+        self.lift()  # Bring the window to the front
 
     def setup_ui(self):
         """
@@ -19,26 +22,32 @@ class OptionsWindow(tk.Toplevel):
         """
         self.row_index = 0
         for name, details in self.options.items():
-            if details["type"] == "number":
-                self.add_number_input(
-                    name,
-                    details["label"],
-                    details["default"],
-                    details["min"],
-                    details["max"],
-                )
-            elif details["type"] == "text":
-                self.add_text_input(name, details["label"], details["default"])
-            elif details["type"] == "checkbox":
-                self.add_checkbox(name, details["label"], details["default"])
-            elif details["type"] == "dropdown":
-                self.add_dropdown(
-                    name, details["label"], details["options"], details["default"]
-                )
-            elif details["type"] == "color":
-                self.add_color_picker(name, details["label"], details["default"])
+            self.create_option(name, details)
 
         self.create_apply_button()
+
+    def create_option(self, name, details):
+        """
+        Create an option based on its type.
+        """
+        if details["type"] == "number":
+            self.add_number_input(
+                name,
+                details["label"],
+                details["default"],
+                details["min"],
+                details["max"],
+            )
+        elif details["type"] == "text":
+            self.add_text_input(name, details["label"], details["default"])
+        elif details["type"] == "checkbox":
+            self.add_checkbox(name, details["label"], details["default"])
+        elif details["type"] == "dropdown":
+            self.add_dropdown(
+                name, details["label"], details["options"], details["default"]
+            )
+        elif details["type"] == "color":
+            self.add_color_picker(name, details["label"], details["default"])
 
     def add_number_input(self, name, label, default, min_val, max_val):
         """
@@ -51,10 +60,10 @@ class OptionsWindow(tk.Toplevel):
             min_val (int): The minimum value.
             max_val (int): The maximum value.
         """
-        lbl = tk.Label(self, text=label)
-        lbl.grid(row=self.row_index, columnspan=1,column=0, padx=5, pady=5, sticky="w")
+        lbl = ctk.CTkLabel(self, text=label)
+        lbl.grid(row=self.row_index, columnspan=1, column=0, padx=5, pady=5, sticky="w")
 
-        entry = tk.Entry(self)
+        entry = ctk.CTkEntry(self)
         entry.insert(0, str(default))
         entry.grid(row=self.row_index, columnspan=2, column=1, padx=5, pady=5, sticky="w")
 
@@ -75,10 +84,10 @@ class OptionsWindow(tk.Toplevel):
             label (str): The label for the input field.
             default (str): The default value.
         """
-        lbl = tk.Label(self, text=label)
+        lbl = ctk.CTkLabel(self, text=label)
         lbl.grid(row=self.row_index, column=0, padx=5, pady=5, sticky="w")
 
-        entry = tk.Entry(self)
+        entry = ctk.CTkEntry(self)
         entry.insert(0, default)
         entry.grid(row=self.row_index, columnspan=2, column=1, padx=5, pady=5, sticky="w")
 
@@ -94,8 +103,8 @@ class OptionsWindow(tk.Toplevel):
             label (str): The label for the input field.
             default (bool): The default value.
         """
-        var = tk.BooleanVar(value=default)
-        chk = tk.Checkbutton(self, text=label, variable=var)
+        var = ctk.BooleanVar(value=default)
+        chk = ctk.CTkCheckBox(self, text=label, variable=var)
         chk.grid(row=self.row_index, column=0,
                  columnspan=2, padx=5, pady=5, sticky="w")
 
@@ -112,32 +121,24 @@ class OptionsWindow(tk.Toplevel):
             options (list): The list of options.
             default (str): The default value.
         """
-        lbl = tk.Label(self, text=label)
+        lbl = ctk.CTkLabel(self, text=label)
         lbl.grid(row=self.row_index, column=0, padx=5, pady=5, sticky="w")
 
-        combo = ttk.Combobox(self, values=options, state="readonly")
+        combo = ctk.CTkComboBox(self, values=options, state="readonly")
         combo.set(default)
-        combo.grid(row=self.row_index,columnspan=2, column=1, padx=5, pady=5, sticky="w")
+        combo.grid(row=self.row_index, columnspan=2, column=1, padx=5, pady=5, sticky="w")
 
         self.inputs[name] = {"type": "dropdown", "widget": combo}
         self.row_index += 1
 
-    def check_transparent(self, var, color_entry, pick_button, color_preview):
-        if var.get():
-            color_entry.config(state="disabled")
-            pick_button.config(state="disabled")
-            color_preview.config(bg="white")
-        else:
-            color_entry.config(state="normal")
-            pick_button.config(state="normal")
-            color_preview.config(bg=color_entry.get())
+    def pick_color(self, button):
+        self.attributes('-topmost', False)  # Temporarily disable topmost to allow colorchooser to be on top
+        color_code = colorchooser.askcolor(parent=self, title="Choose color")[1]
+        self.attributes('-topmost', True)  # Re-enable topmost for this window
 
-    def pick_color(self, color_entry, color_preview):
-        color_code = colorchooser.askcolor(title="Choose color")[1]
         if color_code:
-            color_entry.delete(0, tk.END)
-            color_entry.insert(0, color_code)
-            color_preview.config(bg=color_code)
+            button.configure(fg_color=color_code)
+            self.inputs[button.name]["color"] = color_code
 
     def add_color_picker(self, name, label, default):
         """
@@ -148,36 +149,32 @@ class OptionsWindow(tk.Toplevel):
             label (str): The label for the color picker.
             default (str): The default color.
         """
-        if default == "transparent":
-            default = "#ffffff"
-            var = tk.BooleanVar(value=True)
-        else:
-            var = tk.BooleanVar(value=False)
-        lbl = tk.Label(self, text=label)
+        lbl = ctk.CTkLabel(self, text=label)
         lbl.grid(row=self.row_index, column=0, padx=5, pady=5, sticky="w")
 
-        color_preview = tk.Label(self, bg=default, width=2, height=1)
-        color_preview.grid(row=self.row_index, column=1, padx=5, pady=5, sticky="w")
+        color_button = ctk.CTkButton(self, text="", width=30, command=lambda: self.pick_color(color_button))
+        color_button.name = name
+        color_button.configure(fg_color=default)
+        color_button.grid(row=self.row_index, column=1, padx=5, pady=5, sticky="w")
 
-        color_entry = tk.Entry(self)
-        color_entry.insert(0, default)
-        color_entry.grid(row=self.row_index, column=2, padx=5, pady=5, sticky="w")
+        chk_var = ctk.BooleanVar(value=(default == "transparent"))
+        chk = ctk.CTkCheckBox(self, text="Transparent", variable=chk_var, command=lambda: self.check_transparent(chk_var, color_button))
+        chk.grid(row=self.row_index, column=2, padx=5, pady=5, sticky="w")
 
-        pick_button = tk.Button(self, text="Pick", command=lambda: self.pick_color(color_entry, color_preview))
-        pick_button.grid(row=self.row_index, column=3, padx=5, pady=5, sticky="w")
-
-        
-        chk = tk.Checkbutton(self, text="Transparent", variable=var, command=lambda: self.check_transparent(var, color_entry, pick_button, color_preview))
-        chk.grid(row=self.row_index, column=4, padx=5, pady=5, sticky="w")
-
-        self.inputs[name] = {"type": "color", "entry": color_entry, "transparent_var": var}
+        self.inputs[name] = {"type": "color", "button": color_button, "transparent_var": chk_var, "color": default}
         self.row_index += 1
+
+    def check_transparent(self, var, button):
+        if var.get():
+            button.configure(state="disabled", fg_color="#ffffff")
+        else:
+            button.configure(state="normal")
 
     def create_apply_button(self):
         """
         Create the apply button.
         """
-        apply_button = tk.Button(
+        apply_button = ctk.CTkButton(
             self, text="Apply", command=self.apply_options)
         apply_button.grid(row=self.row_index, column=0, columnspan=2, pady=10)
 
@@ -205,10 +202,10 @@ class OptionsWindow(tk.Toplevel):
             elif details["type"] == "dropdown":
                 options[name] = details["widget"].get()
             elif details["type"] == "color":
-                if "value" in details:
-                    options[name] = details["value"]
-                else:
+                if details["transparent_var"].get():
                     options[name] = "transparent"
+                else:
+                    options[name] = details["color"]
 
         self.apply_callback(options)
         self.destroy()
@@ -222,33 +219,7 @@ class OptionsWindow(tk.Toplevel):
             condition (function): The condition function that returns a boolean.
         """
         if condition():
-            if self.inputs[name]["type"] == "number":
-                self.add_number_input(
-                    name,
-                    self.inputs[name]["label"],
-                    self.inputs[name]["default"],
-                    self.inputs[name]["min"],
-                    self.inputs[name]["max"],
-                )
-            elif self.inputs[name]["type"] == "text":
-                self.add_text_input(
-                    name, self.inputs[name]["label"], self.inputs[name]["default"]
-                )
-            elif self.inputs[name]["type"] == "checkbox":
-                self.add_checkbox(
-                    name, self.inputs[name]["label"], self.inputs[name]["default"]
-                )
-            elif self.inputs[name]["type"] == "dropdown":
-                self.add_dropdown(
-                    name,
-                    self.inputs[name]["label"],
-                    self.inputs[name]["options"],
-                    self.inputs[name]["default"],
-                )
-            elif self.inputs[name]["type"] == "color":
-                self.add_color_picker(
-                    name, self.inputs[name]["label"], self.inputs[name]["default"]
-                )
+            self.create_option(name, self.inputs[name])
 
 
 # Example usage
@@ -256,7 +227,7 @@ if __name__ == "__main__":
     def apply_options(options):
         print(options)
 
-    root = tk.Tk()
+    root = ctk.CTk()
     current_options = {
         "canvas_width": {"type": "number", "label": "Width:", "default": 900, "min": 1, "max": 2540},
         "canvas_height": {"type": "number", "label": "Height:", "default": 900, "min": 1, "max": 2540},

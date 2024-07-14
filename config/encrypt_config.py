@@ -13,6 +13,7 @@ class ConfigEncryptor:
         encrypted_data = self.fernet.encrypt(json_data.encode())
         with open(self.filename, "wb") as encrypted_file:
             encrypted_file.write(encrypted_data)
+            print("Credentials saved")
 
     def get_key(self):
         return self.key.decode()
@@ -38,7 +39,11 @@ class ConfigEncryptor:
             with open(self.filename, "rb") as encrypted_file:
                 encrypted_data = encrypted_file.read()
             decrypted_data = self.fernet.decrypt(encrypted_data).decode()
-            return json.loads(decrypted_data)
+            config = json.loads(decrypted_data)
+            
+            # Filter only relevant keys
+            keys_to_return = ["credentials", "options"]
+            return {key: config[key] for key in keys_to_return if key in config}
         except FileNotFoundError:
             return None
 

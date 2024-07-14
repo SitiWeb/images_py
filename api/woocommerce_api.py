@@ -55,7 +55,7 @@ def load_credentials():
     with open("config.enc", "rb") as file:
         encrypted = file.read()
     decrypted = fernet.decrypt(encrypted).decode()
-    return json.loads(decrypted)
+    return json.loads(decrypted).get("credentials")
 
 
 def get_wcapi():
