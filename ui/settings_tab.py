@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from api.woocommerce_api import save_credentials, load_credentials
 
+
 class SettingsTab:
     def __init__(self, tab_parent, text):
         self.tab = ttk.Frame(tab_parent)

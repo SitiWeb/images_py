@@ -4,6 +4,7 @@ Main module for the Image Processor application.
 
 import tkinter as tk
 from tkinter import ttk
+import customtkinter
 from ui.log_window import LogWindow
 from ui.local_processing_tab import LocalProcessingTab
 from ui.settings_tab import SettingsTab
@@ -24,7 +25,7 @@ class ImageProcessorApp:
         """
         self.root = root
         self.root.title("Image Processor")
-        self.root.geometry("700x400")
+        self.root.geometry("500x450")
 
         self.tab_parent = ttk.Notebook(self.root)
         self.log_window = None
@@ -64,6 +65,6 @@ if __name__ == "__main__":
     except FileNotFoundError as e:
         print(f"File not found: {e}")
 
-    root = tk.Tk()
+    root = customtkinter.CTk()
     app = ImageProcessorApp(root)
     app.run()

@@ -12,7 +12,8 @@ from cryptography.fernet import Fernet
 import requests
 from woocommerce import API
 from utils.image_processing import ImageProcessor
-
+from config.encrypt_config import ConfigEncryptor
+from utils.file_operations import FileProcessor
 CREDENTIALS_FILE = "credentials.json"
 
 # Hardcoded key (replace with your generated key)
@@ -37,11 +38,8 @@ def save_credentials(url, consumer_key, consumer_secret, username, password):
         "username": username,
         "password": password,
     }
-    credentials_str = json.dumps(credentials)
-    fernet = Fernet(KEY)
-    encrypted = fernet.encrypt(credentials_str.encode())
-    with open("config.enc", "wb") as file:
-        file.write(encrypted)
+
+    ConfigEncryptor(KEY).save_credentials(credentials)
 
 
 def load_credentials():
@@ -230,7 +228,7 @@ def update_product(image_ids, product_id):
             f"Failed to update product with ID {product_id}. Error: {response.text}")
 
 
-def process_product_images(product_id, name_template, canvas_width, canvas_height):
+def process_product_images( options):
     """
     Process images for a WooCommerce product by resizing and uploading them.
 
@@ -240,7 +238,9 @@ def process_product_images(product_id, name_template, canvas_width, canvas_heigh
         canvas_width (int): The width of the canvas for resizing images.
         canvas_height (int): The height of the canvas for resizing images.
     """
-    print(name_template)
+    product_id = options.get("product_id")
+    if not product_id:
+        return
     image_paths, product = get_product(product_id)
     if not image_paths:
         return
@@ -252,15 +252,11 @@ def process_product_images(product_id, name_template, canvas_width, canvas_heigh
         new_list = []
 
         for image_id, file_path in image_paths.items():
-            output_path = generate_output_path(
-                temp_output_directory,
-                file_path,
-                name_template,
-                product,
-                canvas_width,
-                canvas_height,
-            )
-            resize_image(file_path, output_path, "")
+            file = FileProcessor()
+            img = ImageProcessor()
+            output_path = file.generate_output_path(temp_output_directory, file_path, options, product)
+           
+            img.resize_image(file_path, output_path, options)
             new_id = upload_image(output_path)
             if new_id:
                 old_list.append(image_id)
@@ -293,14 +289,13 @@ def generate_output_path(
     sku = product.get("sku", "")
     slug = product.get("name", "")
     title = product.get("slug", "")
-    pprint.pprint(product)
     new_filename = template.format(
         name=name, sku=sku, width=width, height=height, slug=slug, title=title
     )
     return os.path.join(temp_output_directory, new_filename + ext)
 
 
-def process_all_products(name_template, canvas_width, canvas_height):
+def process_all_products(options):
     """
     Process images for all WooCommerce products by resizing and uploading them.
 
@@ -321,8 +316,9 @@ def process_all_products(name_template, canvas_width, canvas_height):
             break
 
         for product in products:
+            options["product_id"] = product["id"]
             process_product_images(
-                product["id"], name_template, canvas_width, canvas_height
+                options
             )
 
         page += 1

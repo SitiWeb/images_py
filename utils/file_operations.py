@@ -1,8 +1,9 @@
 import os
 import shutil
 from tkinter import filedialog, messagebox
-from utils.image_processing import ImageProcessor
 from pprint import pprint
+from utils.deepzoom import DZI
+
 
 class FileProcessor:
     """
@@ -133,9 +134,11 @@ class FileProcessor:
             options (dict): Processing options.
             log (function): The log function to use.
         """
+        from utils.image_processing import ImageProcessor
         image = ImageProcessor()
         image.set_background_color(options.get("background_color", "transparent"))
         image.set_image_size(options.get("image_size", "contain"))
+        format = options.get("image_format")
         for file_path in image_paths:
             # output_path = os.path.join(
             #     output_directory, os.path.relpath(
@@ -144,9 +147,12 @@ class FileProcessor:
             output_path = self.generate_output_path(output_directory, file_path, options)
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             self.log_message(f"Running: {file_path}", log)
-            image.resize_image(
-                file_path, output_path, options 
-            )
+            if format == "DZI":
+                DZI(file_path, output_path, options)
+            else:
+                image.resize_image(
+                    file_path, output_path, options 
+                )
 
             if os.path.exists(file_path) and options.get("delete_images", False):
                 self.log_message(f"Removing: {file_path}", log)
@@ -173,5 +179,14 @@ class FileProcessor:
         new_filename = options.get('template', '{name}').format(
             name=name, sku=sku, width=width, height=height, slug=slug, title=title
         )
-        pprint(new_filename)
-        return os.path.join(output_directory, new_filename + ext)
+        imgf = options.get("image_format", "AUTO")
+        if imgf == "AUTO":
+            return os.path.join(output_directory, new_filename + ext)
+        elif imgf == "GIF":
+            return os.path.join(output_directory, new_filename + ".gif")
+        elif imgf == "PNG":
+            return os.path.join(output_directory, new_filename + ".png")
+        elif imgf == "JPEG":
+            return os.path.join(output_directory, new_filename + ".jpg")
+        elif imgf == "DZI":
+            return os.path.join(output_directory, new_filename + ".dzi")

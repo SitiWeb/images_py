@@ -5,7 +5,7 @@ class OptionsWindow(tk.Toplevel):
     def __init__(self, parent, apply_callback, current_options):
         super().__init__(parent)
         self.title("Options")
-        self.geometry("400x500")
+        self.geometry("500x500")
 
         self.apply_callback = apply_callback
         self.options = current_options
@@ -149,7 +149,7 @@ class OptionsWindow(tk.Toplevel):
             default (str): The default color.
         """
         if default == "transparent":
-            default = "#00000000"
+            default = "#ffffff"
             var = tk.BooleanVar(value=True)
         else:
             var = tk.BooleanVar(value=False)

@@ -14,7 +14,7 @@ from utils.image_processing import ImageProcessor
 from api.woocommerce_api import process_product_images, process_all_products
 from ui.options_window import OptionsWindow
 from pprint import pformat, pprint
-
+from config.encrypt_config import ConfigEncryptor
 
 class LocalProcessingTab:
     """
@@ -30,11 +30,13 @@ class LocalProcessingTab:
             text (str): The text to display on the tab.
             log (function): The function to log messages.
         """
+        key = b"u4xTBY5Ns4WYdLvqMjEr138mpMmDEhhqTszKCcDy2cI="
+       
         self.log = log
         self.tab = ttk.Frame(tab_parent)
         self.root = self.tab.winfo_toplevel()  # Store the root window reference
         tab_parent.add(self.tab, text=text)
-
+        self.config = ConfigEncryptor(key)
         self.log_window = None
 
         self.canvas_width = 900
@@ -45,7 +47,7 @@ class LocalProcessingTab:
         self.background_color = "#000000"
         self.image_format = "AUTO"
         self.image_size = "contain"
-
+        self.load_config()
         self.source_type = StringVar(value="local")
         self.checkbox_var = BooleanVar(value=False)
         self.file = FileProcessor()
@@ -54,6 +56,21 @@ class LocalProcessingTab:
 
         self.setup_ui()
         self.update_options()
+
+    def load_config(self):
+ 
+        config = self.config.load_config()
+        if config:
+            if options := config.get("options"):
+                self.canvas_width = options.get("canvas_width", 900)
+                self.canvas_height = options.get("canvas_height", 900)
+                self.template = options.get("template",  "{slug}_{sku}_{width}x{height}")
+                self.delete_images = options.get("delete_images", False)
+                self.transparent = options.get("transparent", True)
+                self.background_color = options.get("background_color", "#000000")
+                self.image_format = options.get("image_format", "AUTO")
+                self.image_size = options.get("image_size", "contain")
+
 
     def create_log_window(self):
         """
@@ -127,7 +144,7 @@ class LocalProcessingTab:
         self.options_button = ttk.Button(
             self.tab, text="Options", command=self.open_options_window
         )
-        self.options_button.grid(row=4, column=0, padx=5, pady=5, sticky="w")
+        self.options_button.grid(row=2, column=3, columnspan=2,  padx=5, pady=5, sticky="w")
 
         self.button_start = Button(
             self.tab, text="Start Processing", command=self.start_processing
@@ -251,7 +268,6 @@ class LocalProcessingTab:
         """
         Apply the canvas size settings and update previews.
         """
-        pprint(self.image_size)
         self.image.set_image_size(self.image_size)
 
     def apply_background_color(self):
@@ -261,7 +277,7 @@ class LocalProcessingTab:
         self.image.set_background_color(self.background_color)
   
 
-    def get_options(self):
+    def get_options(self) -> dict:
         """
         Get the current processing options.
 
@@ -321,7 +337,7 @@ class LocalProcessingTab:
             "image_format": {
                 "type": "dropdown", 
                 "label": "Image Format:", 
-                "options": ["AUTO", "JPEG", "PNG", "GIF"],
+                "options": ["AUTO", "JPEG", "PNG", "GIF", "DZI"],
                 "default": self.image_format
             },
             "image_size": {
@@ -351,10 +367,12 @@ class LocalProcessingTab:
         self.delete_images = options["delete_images"]
         self.background_color = options["background_color"]
         self.image_size = options["image_size"]
-
+        self.image_format = options["image_format"]
         self.apply_canvas_size()
         self.apply_background_color()
         self.apply_image_size()
+        key = b"u4xTBY5Ns4WYdLvqMjEr138mpMmDEhhqTszKCcDy2cI="
+        self.config.save_options(self.get_options())
         self.update_previews()
 
     def pprint_log_message(self, obj):
@@ -375,31 +393,18 @@ class LocalProcessingTab:
         source = self.source_type.get()
         options = self.get_options()
 
-        # Log the current settings
-        self.pprint_log_message(options)
-
         if source == "local":
             threading.Thread(
-                target=self.file.process_directory_with_logging, args=(
-                    options,)
+                target=self.file.process_directory_with_logging, args=(options,)
             ).start()
         elif source == "product":
             threading.Thread(
                 target=process_product_images,
-                args=(
-                    options["product_id"],
-                    options["canvas_width"],
-                    options["canvas_height"],
-                    options["log_message"],
-                ),
+                args=(options,)
             ).start()
         elif source == "all_products":
             threading.Thread(
                 target=process_all_products,
-                args=(
-                    options["canvas_width"],
-                    options["canvas_height"],
-                    options["log_message"],
-                ),
+                args=(options,)
             ).start()
         self.update_previews()

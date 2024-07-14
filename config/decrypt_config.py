@@ -58,6 +58,5 @@ if __name__ == "__main__":
     decryptor = ConfigDecryptor(DECRYPTION_KEY)
     try:
         config = decryptor.decrypt()
-        print(config)
     except FileNotFoundError as e:
         print(e)

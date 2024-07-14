@@ -2,7 +2,6 @@ import os
 from wand.image import Image
 from wand.color import Color
 
-
 class ImageProcessor:
     def __init__(self, canvas_width=900, canvas_height=900, background_color="transparent", image_size="fit"):
         """
@@ -12,6 +11,7 @@ class ImageProcessor:
         self.canvas_height = canvas_height
         self.background_color = Color(background_color)
         self.image_size = image_size
+      
 
     def set_canvas_size(self, width, height):
         """
@@ -88,8 +88,7 @@ class ImageProcessor:
 
         aspect_ratio_img = img.width / img.height
         aspect_ratio_canvas = self.canvas_width / self.canvas_height
-        print(f"Image aspect ratio: {aspect_ratio_img}, Canvas aspect ratio: {aspect_ratio_canvas}")
-        print(f"Cover resized image size: {img.width}x{img.height}")
+
 
 
     def _contain(self, img):
@@ -98,13 +97,10 @@ class ImageProcessor:
         """
         aspect_ratio_img = img.width / img.height
         aspect_ratio_canvas = self.canvas_width / self.canvas_height
-        print(f"Image aspect ratio: {aspect_ratio_img}, Canvas aspect ratio: {aspect_ratio_canvas}")
-
         if aspect_ratio_img > aspect_ratio_canvas:
             img.transform(resize=f"{self.canvas_width}x")
         else:
             img.transform(resize=f"x{self.canvas_height}")
-        print(f"Cover resized image size: {img.width}x{img.height}")
 
     # def _fit(self, img):
     #     """
