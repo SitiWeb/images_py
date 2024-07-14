@@ -10,13 +10,22 @@ class SettingsTab:
         self.setup_ui()
 
     def setup_ui(self):
-        settings_options = {
-            "url": {"type": "text", "label": "WooCommerce URL:", "default": self.credentials.get('url', '')},
-            "consumer_key": {"type": "text", "label": "Consumer Key:", "default": self.credentials.get('consumer_key', '')},
-            "consumer_secret": {"type": "text", "label": "Consumer Secret:", "default": self.credentials.get('consumer_secret', '')},
-            "username": {"type": "text", "label": "Username:", "default": self.credentials.get('username', '')},
-            "password": {"type": "text", "label": "Password:", "default": self.credentials.get('password', ''), "show": "*"}
-        }
+        if self.credentials:
+            settings_options = {
+                "url": {"type": "text", "label": "WooCommerce URL:", "default": self.credentials.get('url', '')},
+                "consumer_key": {"type": "text", "label": "Consumer Key:", "default": self.credentials.get('consumer_key', '')},
+                "consumer_secret": {"type": "text", "label": "Consumer Secret:", "default": self.credentials.get('consumer_secret', '')},
+                "username": {"type": "text", "label": "Username:", "default": self.credentials.get('username', '')},
+                "password": {"type": "text", "label": "Password:", "default": self.credentials.get('password', ''), "show": "*"}
+            }
+        else:
+            settings_options = {
+                "url": {"type": "text", "label": "WooCommerce URL:", "default": ""},
+                "consumer_key": {"type": "text", "label": "Consumer Key:", "default": ""},
+                "consumer_secret": {"type": "text", "label": "Consumer Secret:", "default": ""},
+                "username": {"type": "text", "label": "Username:", "default": ""},
+                "password": {"type": "text", "label": "Password:", "default": "", "show": "*"}
+            }
 
         row_index = 0
         for name, details in settings_options.items():

@@ -23,8 +23,7 @@ class ImageProcessorApp:
         """
         self.root = root
         self.root.title("Image Processor")
-        self.root.geometry("520x600")
-
+        self.root.geometry("480x800")
         # Create menu frame at the top
         menu_frame = ctk.CTkFrame(self.root)
         menu_frame.pack(side="top", fill="x")
@@ -37,7 +36,7 @@ class ImageProcessorApp:
 
         # Create main frame to hold tabs and log window
         main_frame = ctk.CTkFrame(self.root)
-        main_frame.pack(expand=True, fill="both")
+        main_frame.pack(expand=True, fill="x")
 
         self.tab_parent = ctk.CTkFrame(main_frame)
         self.tab_parent.grid(row=0, column=0, sticky="nsew")
@@ -45,8 +44,8 @@ class ImageProcessorApp:
         self.log_frame = ctk.CTkFrame(main_frame)
         self.log_frame.grid(row=1, column=0, sticky="nsew")
 
-        main_frame.grid_rowconfigure(0, weight=3)
-        main_frame.grid_rowconfigure(1, weight=1)
+        main_frame.grid_rowconfigure(0, weight=1)
+
         main_frame.grid_columnconfigure(0, weight=1)
 
         self.log_window = LogWindow(self.log_frame)
@@ -63,7 +62,7 @@ class ImageProcessorApp:
         """
         Show the Local Processing tab.
         """
-        self.local_processing_tab.tab.tkraise()
+        self.local_processing_tab.tab.tkraise() 
 
     def show_settings_tab(self):
         """
@@ -81,12 +80,13 @@ class ImageProcessorApp:
 if __name__ == "__main__":
     try:
         decryptor = ConfigEncryptor(DECRYPTION_KEY)
-        config = decryptor.load_config()
-        wc_url = config["url"]
-        wc_consumer_key = config["consumer_key"]
-        wc_consumer_secret = config["consumer_secret"]
-        wp_username = config["username"]
-        wp_password = config["password"]
+        config = decryptor.load_credentials()
+        if config:
+            wc_url = config["url"]
+            wc_consumer_key = config["consumer_key"]
+            wc_consumer_secret = config["consumer_secret"]
+            wp_username = config["username"]
+            wp_password = config["password"]
     except FileNotFoundError as e:
         print(f"File not found: {e}")
 

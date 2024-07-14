@@ -1,7 +1,3 @@
-"""
-Module for the Local Processing Tab in the Image Processor application.
-"""
-
 import tempfile
 import threading
 import customtkinter as ctk
@@ -58,7 +54,6 @@ class LocalProcessingTab:
 
     def load_config(self):
         config = self.config.load_config()
-        print(config)
         if config:
             if options := config.get("options"):
                 self.canvas_width = options.get("canvas_width", 900)
@@ -75,103 +70,104 @@ class LocalProcessingTab:
         Set up the user interface for the tab.
         """
         current_row = 0
+        start_options_frame = ctk.CTkFrame(self.tab, bg_color="gray30")
+        start_options_frame.grid(row=current_row, column=0, columnspan=6, padx=5, pady=5, sticky="ew")
 
-        # Source selection section
-        self.source_label = ctk.CTkLabel(self.tab, anchor="w", width=500, text="Source Type:")
-        self.source_label.grid(row=current_row, column=0, columnspan=6, padx=5, pady=5, sticky="w")
+        self.options_button = ctk.CTkButton(
+            start_options_frame, text="Options", command=self.open_options_window
+        )
+        self.options_button.grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky="w")
 
+        self.button_start = ctk.CTkButton(
+            start_options_frame, text="Start Processing", command=self.start_processing
+        )
+        self.button_start.grid(row=0, column=2, columnspan=2, padx=5, pady=5, sticky="w")
+
+        # Image previews section
         current_row += 1
 
+        # Source selection section
+        source_frame = ctk.CTkFrame(self.tab, bg_color="gray20")
+        source_frame.grid(row=current_row, column=0, columnspan=6, padx=5, pady=5, sticky="ew")
+
+        source_label = ctk.CTkLabel(source_frame, anchor="w", text="Source Type:")
+        source_label.grid(row=0, column=0, columnspan=6, padx=5, pady=5, sticky="w")
+
         self.source_dropdown = ctk.CTkComboBox(
-            self.tab,
+            source_frame,
             variable=self.source_type,
             values=["directory", "file", "wp_image", "product", "all_products"],
             state="readonly",
             command=self.update_options
         )
-        self.source_dropdown.grid(row=current_row, column=0, columnspan=2, padx=5, pady=5, sticky="w")
+        self.source_dropdown.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="w")
         self.source_dropdown.bind(
             "<<ComboboxSelected>>", lambda e: self.update_options()
         )
-          # Options button
-        self.options_button = ctk.CTkButton(
-            self.tab, text="Options", command=self.open_options_window
-        )
-        self.options_button.grid(row=current_row, column=4, columnspan=2,  padx=5, pady=5, sticky="w")
-
-        current_row += 1
-
-        self.button_start = ctk.CTkButton(
-            self.tab, text="Start Processing", command=self.start_processing
-        )
-        self.button_start.grid(
-            row=current_row, column=4, columnspan=2, padx=5, pady=5, sticky="w"
-        )
 
         self.browse_button = ctk.CTkButton(
-            self.tab, text="Browse directory", command=self.browse_directory_command
+            source_frame, text="Browse directory", command=self.browse_directory_command
         )
-        self.browse_button.grid(row=current_row, column=0, columnspan=2, padx=5, pady=5, sticky="w")
+        self.browse_button.grid(row=2, column=0, columnspan=2, padx=5, pady=5, sticky="w")
 
         self.browse_file_button = ctk.CTkButton(
-            self.tab, text="Browse file", command=self.browse_file_command
+            source_frame, text="Browse file", command=self.browse_file_command
         )
-        self.browse_file_button.grid(row=current_row, column=0, columnspan=2, padx=5, pady=5, sticky="w")
+        self.browse_file_button.grid(row=2, column=2, columnspan=2, padx=5, pady=5, sticky="w")
 
-        # WooCommerce Product ID section
-        self.product_id_button = ctk.CTkButton(self.tab, text="Get", width=25)
-        self.product_id_button.grid(row=2, column=2, columnspan=1, padx=5, pady=5, sticky="w")
+        self.product_id_button = ctk.CTkButton(source_frame, text="Get", width=25)
+        self.product_id_button.grid(row=2, column=4, columnspan=1, padx=5, pady=5, sticky="w")
 
-        self.product_id_entry = ctk.CTkEntry(self.tab)
-        self.product_id_entry.grid(row=current_row, column=0,  columnspan=2,padx=5, pady=5, sticky="w")
+        self.product_id_entry = ctk.CTkEntry(source_frame)
+        self.product_id_entry.grid(row=2, column=5, columnspan=2, padx=5, pady=5, sticky="w")
 
-        # SKU section
-        self.additional_name_label = ctk.CTkLabel(self.tab, text="Add suffix:")
-        self.additional_name_label.grid(
-            row=current_row, column=1, padx=5, pady=5, sticky="w")
+        self.additional_name_label = ctk.CTkLabel(source_frame, text="Add suffix:")
+        self.additional_name_label.grid(row=2, column=7, padx=5, pady=5, sticky="w")
 
-        self.additional_name_entry = ctk.CTkEntry(self.tab)
-        self.additional_name_entry.grid(
-            row=current_row, column=2, padx=5, pady=5, sticky="w")
-
-        current_row += 1
+        self.additional_name_entry = ctk.CTkEntry(source_frame)
+        self.additional_name_entry.grid(row=2, column=8, padx=5, pady=5, sticky="w")
 
         # Destination selection section
-        self.destionation_label = ctk.CTkLabel(self.tab, anchor="w", width=500, text="Destination Type:")
-        self.destionation_label.grid(row=current_row, column=0, columnspan=6, padx=5, pady=5, sticky="w")
-
         current_row += 1
+        # destination_frame = ctk.CTkFrame(self.tab, bg_color="gray25")
+        # destination_frame.grid(row=current_row, column=0, columnspan=6, padx=5, pady=5, sticky="ew")
 
-        self.destionation_dropdown = ctk.CTkComboBox(
-            self.tab,
-            variable=self.source_type,
-            values=["auto", "directory", "file", "wp_image", "product"],
-            state="readonly",
-            command=self.update_options
-        )
-        self.destionation_dropdown.grid(row=current_row, column=0, columnspan=2, padx=5, pady=5, sticky="w")
-        self.destionation_dropdown.bind(
-            "<<ComboboxSelected>>", lambda e: self.update_options()
-        )
+        # destination_label = ctk.CTkLabel(destination_frame, anchor="w", text="Destination Type:")
+        # destination_label.grid(row=0, column=0, columnspan=6, padx=5, pady=5, sticky="w")
 
-        current_row += 1
+        # self.destination_dropdown = ctk.CTkComboBox(
+        #     destination_frame,
+        #     variable=self.source_type,
+        #     values=["auto", "directory", "file", "wp_image", "product"],
+        #     state="readonly",
+        #     command=self.update_options
+        # )
+        # self.destination_dropdown.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="w")
 
-        # Image previews
-        self.before_label = ctk.CTkLabel(self.tab, text="Before:")
-        self.before_label.grid(row=current_row, column=0, padx=5, pady=5, sticky="w")
+        # # Start and Options section
+        # current_row += 1
+       
+        preview_frame = ctk.CTkFrame(self.tab, bg_color="gray35")
+        preview_frame.grid(row=current_row, column=0, columnspan=6, padx=5, pady=5, sticky="ew")
 
-        self.after_label = ctk.CTkLabel(self.tab, text="After:")
-        self.after_label.grid(row=current_row, column=3, padx=5, pady=5, sticky="w")
+        self.before_label = ctk.CTkLabel(preview_frame, text="Before:")
+        self.before_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
 
-        current_row += 1
+        self.after_label = ctk.CTkLabel(preview_frame, text="After:")
+        self.after_label.grid(row=0, column=3, padx=5, pady=5, sticky="w")
 
-        self.after_image_label = ctk.CTkLabel(self.tab, text="")
-        self.after_image_label.grid(
-            row=current_row, column=3, columnspan=3, padx=5, pady=5, sticky="w")
-        
-        self.before_image_label = ctk.CTkLabel(self.tab, text="")
-        self.before_image_label.grid(
-            row=current_row, column=0, columnspan=3, padx=5, pady=5, sticky="w")
+        self.before_image_label = ctk.CTkLabel(preview_frame, text="")
+        self.before_image_label.grid(row=1, column=0, columnspan=3, padx=5, pady=5, sticky="w")
+
+        self.after_image_label = ctk.CTkLabel(preview_frame, text="")
+        self.after_image_label.grid(row=1, column=3, columnspan=3, padx=5, pady=5, sticky="w")
+
+        # Configure grid weights to make frames span the full width
+        self.tab.grid_columnconfigure(0, weight=1)
+        source_frame.grid_columnconfigure(0, weight=1)
+  
+        start_options_frame.grid_columnconfigure(0, weight=1)
+        preview_frame.grid_columnconfigure(0, weight=1)
 
     def update_options(self, text=None):
         """
@@ -201,8 +197,6 @@ class LocalProcessingTab:
             after_path (str, optional): The path to the 'after' image.
         """
         first_image_path = self.file.get_first_image_path()
-        if not before_path and not first_image_path:
-            first_image_path = "images/image-7.jpg"  # Set the path to your image here
         if before_path and after_path:
             before_img = Image.open(before_path)
             before_img.thumbnail((200, 200))
@@ -274,7 +268,6 @@ class LocalProcessingTab:
             self.browse_button.configure(text=dir_name)
             self.apply_options(self.get_options())
             self.update_previews()
-
 
     def apply_canvas_size(self):
         """

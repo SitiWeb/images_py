@@ -43,7 +43,7 @@ class FileProcessor:
         """
         if self.selected_file:
             return self.selected_file
-        
+            return None
         if not self.selected_directory:
             return None
 

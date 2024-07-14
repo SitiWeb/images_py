@@ -46,6 +46,11 @@ class ConfigEncryptor:
             return {key: config[key] for key in keys_to_return if key in config}
         except FileNotFoundError:
             return None
+    def load_credentials(self):
+        config = self.load_config()
+        if config:
+            return config.get("credentials")
+        return None
 
     @staticmethod
     def is_json_serializable(value):
