@@ -1,5 +1,5 @@
 import customtkinter as ctk
-
+from datetime import datetime
 class LogWindow:
     def __init__(self, parent):
         self.frame = ctk.CTkFrame(parent)
@@ -14,8 +14,18 @@ class LogWindow:
         self.log_text.configure(yscrollcommand=self.scrollbar.set)
 
     def log_message(self, message):
+        """
+        Log a message to the log window with the current timestamp.
+        """
+        # Get the current time in the desired format (e.g., HH:MM:SS)
+        current_time = datetime.now().strftime("%H:%M:%S")
+        
+        # Prepend the current time to the message
+        full_message = f"[{current_time}] {message}"
+
+        # Log the message
         self.log_text.configure(state="normal")
-        self.log_text.insert(ctk.END, message + "\n")
+        self.log_text.insert(ctk.END, full_message + "\n")
         self.log_text.see(ctk.END)
         self.log_text.configure(state="disabled")
         self.log_text.update_idletasks()

@@ -44,17 +44,16 @@ class FileProcessor:
         if self.selected_file:
             return self.selected_file
             return None
-        if not self.selected_directory:
-            return None
-
-        for root, dirs, files in os.walk(self.selected_directory):
-            if "ProcessedImages" in dirs:
-                dirs.remove("ProcessedImages")
-            for file in files:
-                if file.lower().endswith(
-                    (".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif")
-                ):
-                    return os.path.join(root, file)
+        if self.selected_directory:
+            
+            for root, dirs, files in os.walk(self.selected_directory):
+                if "ProcessedImages" in dirs:
+                    dirs.remove("ProcessedImages")
+                for file in files:
+                    if file.lower().endswith(
+                        (".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif")
+                    ):
+                        return os.path.join(root, file)
         return None
 
     def log_message(self, message, log=None):
@@ -66,7 +65,7 @@ class FileProcessor:
             log (function, optional): The log function to use. Defaults to None.
         """
         if log:
-            log(message)
+            log.log_message(message)
         else:
             print(message)
 
@@ -77,6 +76,8 @@ class FileProcessor:
         Args:
             options (dict): Processing options.
         """
+        if options.get("selected_directory"):
+            self.selected_directory = options.get("selected_directory")
         if not self.selected_directory:
             messagebox.showwarning(
                 "No Directory", "Please select a directory.")
@@ -85,8 +86,12 @@ class FileProcessor:
         self.log_message(
             f"Processing started for directory: {self.selected_directory}", log
         )
-
-        output_directory = self.create_output_directory(log)
+        self.log_message(
+            options, log
+        )
+        output_directory = options.get('destination_path')
+        if not output_directory:
+            output_directory = self.create_output_directory(log)
         image_paths = self.collect_image_paths(log)
 
         self.process_images(image_paths, output_directory, options, log)
@@ -106,7 +111,7 @@ class FileProcessor:
             str: The path to the output directory.
         """
         output_directory = os.path.join(
-            self.selected_directory, "ProcessedImages")
+            self.selected_directory)
         if os.path.exists(output_directory):
             shutil.rmtree(output_directory)
             self.log_message("Existing directory removed.", log)
@@ -138,7 +143,7 @@ class FileProcessor:
         self.log_message(f"Total images found: {len(image_paths)}", log)
         return image_paths
 
-    def process_images(self, image_paths, output_directory, options, log):
+    def process_images(self, image_paths, output_directory, options, log, product = None):
         """
         Process each image by resizing and saving it to the output directory.
 
@@ -147,31 +152,45 @@ class FileProcessor:
             output_directory (str): The path to the output directory.
             options (dict): Processing options.
             log (function): The log function to use.
+
+        Returns:
+            list: A list of output image paths.
         """
         from utils.image_processing import ImageProcessor
+        processed_images = []
         image = ImageProcessor()
         image.set_background_color(options.get("background_color", "transparent"))
         image.set_image_size(options.get("image_size", "contain"))
+        image.set_canvas_size( options.get("canvas_width"), options.get("canvas_height"))
         format = options.get("image_format")
+        
         for file_path in image_paths:
-            # output_path = os.path.join(
-            #     output_directory, os.path.relpath(
-            #         file_path, self.selected_directory)
-            # )
-            output_path = self.generate_output_path(output_directory, file_path, options)
+            output_path = self.generate_output_path(output_directory, file_path, options, product)
+            previews = options.get("update_previews")
+            previews(file_path)
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
-            self.log_message(f"Running: {file_path}", log)
+            log.log_message(f"Running: {file_path}")
+            # Check if the image is JPG and set background color accordingly
+            if file_path.lower().endswith(".jpg") or file_path.lower().endswith(".jpeg"):
+                image.set_background_color("white")
+            else:
+                image.set_background_color(options.get("background_color", "transparent"))
+            
             if format == "DZI":
                 DZI(file_path, output_path, options)
             else:
-                image.resize_image(
-                    file_path, output_path, options 
-                )
+                image.resize_image(file_path, output_path, options)
 
+            # Collect the processed output path
+            processed_images.append(output_path)
+            previews(None, output_path)
             if os.path.exists(file_path) and options.get("delete_images", False):
                 self.log_message(f"Removing: {file_path}", log)
                 os.remove(file_path)
             self.log_message(f"Processed: {file_path}", log)
+        
+        return processed_images
+
 
     def proces_single_image(self, options):
         """
@@ -229,3 +248,5 @@ class FileProcessor:
             return os.path.join(output_directory, new_filename + ".jpg")
         elif imgf == "DZI":
             return os.path.join(output_directory, new_filename + ".dzi")
+        elif imgf == "WEBP":
+            return os.path.join(output_directory, new_filename + ".webp")

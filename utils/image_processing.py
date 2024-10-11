@@ -119,7 +119,7 @@ class ImageProcessor:
             log (function, optional): The log function to use. Defaults to None.
         """
         if log:
-            log(message)
+            log.log_message(message)
         else:
             print(message)
 
