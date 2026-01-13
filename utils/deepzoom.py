@@ -54,15 +54,25 @@ from collections import deque
 
 NS_DEEPZOOM = "http://schemas.microsoft.com/deepzoom/2008"
 
-DEFAULT_RESIZE_FILTER = PIL.Image.ANTIALIAS
+if hasattr(PIL.Image, "Resampling"):
+    _RESAMPLING = PIL.Image.Resampling
+else:
+    _RESAMPLING = PIL.Image
+
+_LANCZOS = _RESAMPLING.LANCZOS
+_BICUBIC = _RESAMPLING.BICUBIC
+_BILINEAR = _RESAMPLING.BILINEAR
+_NEAREST = _RESAMPLING.NEAREST
+
+DEFAULT_RESIZE_FILTER = _LANCZOS
 DEFAULT_IMAGE_FORMAT = "jpg"
 
 RESIZE_FILTERS = {
-    "cubic": PIL.Image.CUBIC,
-    "bilinear": PIL.Image.BILINEAR,
-    "bicubic": PIL.Image.BICUBIC,
-    "nearest": PIL.Image.NEAREST,
-    "antialias": PIL.Image.ANTIALIAS,
+    "cubic": _BICUBIC,
+    "bilinear": _BILINEAR,
+    "bicubic": _BICUBIC,
+    "nearest": _NEAREST,
+    "antialias": _LANCZOS,
 }
 
 IMAGE_FORMATS = {
@@ -311,14 +321,14 @@ class DeepZoomCollection(object):
                     if w != e_w or h != e_h:
                         # Resize incorrect tile to correct size
                         source_image = source_image.resize(
-                            (e_w, e_h), PIL.Image.ANTIALIAS
+                            (e_w, e_h), DEFAULT_RESIZE_FILTER
                         )
                         # Store new dimensions
                         w, h = e_w, e_h
                 else:
                     w = int(math.ceil(w * 0.5))
                     h = int(math.ceil(h * 0.5))
-                    source_image.thumbnail((w, h), PIL.Image.ANTIALIAS)
+                    source_image.thumbnail((w, h), DEFAULT_RESIZE_FILTER)
             column, row = self.get_position(i)
             x = (column % images_per_tile) * level_size
             y = (row % images_per_tile) * level_size
@@ -407,7 +417,7 @@ class ImageCreator(object):
         if self.descriptor.width == width and self.descriptor.height == height:
             return self.image
         if (self.resize_filter is None) or (self.resize_filter not in RESIZE_FILTERS):
-            return self.image.resize((width, height), PIL.Image.ANTIALIAS)
+            return self.image.resize((width, height), DEFAULT_RESIZE_FILTER)
         return self.image.resize((width, height), RESIZE_FILTERS[self.resize_filter])
 
     def tiles(self, level):

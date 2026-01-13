@@ -7,7 +7,7 @@ from config.encrypt_config import ConfigEncryptor
 from api.woocommerce_api import get_first_image
 from PIL import Image, ImageTk
 from pprint import pformat
-from api.woocommerce_api import process_product_images, process_all_products, search_product, get_first_image_path
+from api.woocommerce_api import process_product_images, process_all_products, search_product, get_first_image_path, get_product
 import customtkinter as ctk
 import os
 
@@ -271,23 +271,22 @@ class AppController:
             self.preview_bar.before_filename_label.configure(text=dir_name)
 
         if first_image_path:
-            with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as temp_file:
-                output_path = temp_file.name
-                self.image.resize_image(
-                    first_image_path, output_path, self.get_options()
-                )
-                before_img = Image.open(first_image_path)
-                before_img.thumbnail((200, 200))
-                before_photo = ImageTk.PhotoImage(before_img)
-                self.preview_bar.before_image_label.configure(image=before_photo)
-                self.preview_bar.before_image_label.image = before_photo
+            fd, output_path = tempfile.mkstemp(suffix=".jpg")
+            os.close(fd)
+            self.image.resize_image(
+                first_image_path, output_path, self.get_options()
+            )
+            before_img = Image.open(first_image_path)
+            before_img.thumbnail((200, 200))
+            before_photo = ImageTk.PhotoImage(before_img)
+            self.preview_bar.before_image_label.configure(image=before_photo)
+            self.preview_bar.before_image_label.image = before_photo
 
-                after_img = Image.open(output_path)
-                after_img.thumbnail((200, 200))
-                after_photo = ImageTk.PhotoImage(after_img)
-                self.preview_bar.after_image_label.configure(image=after_photo)
-                self.preview_bar.after_image_label.image = after_photo
-   
+            after_img = Image.open(output_path)
+            after_img.thumbnail((200, 200))
+            after_photo = ImageTk.PhotoImage(after_img)
+            self.preview_bar.after_image_label.configure(image=after_photo)
+            self.preview_bar.after_image_label.image = after_photo
             name = self.file.generate_output_path("/",first_image_path,self.get_options())
             dir_name = os.path.basename(name)
             if len(dir_name) > 35:
@@ -474,7 +473,17 @@ class AppController:
         self.update_previews()
 
     def process_product(self, input):
-        self.found_products = search_product(input)
+        cleaned_input = (input or "").strip()
+        self.found_products = None
+        self.current_product = 0
+
+        if cleaned_input.isdigit():
+            product = get_product(int(cleaned_input))
+            if product:
+                self.found_products = [product]
+        else:
+            self.found_products = search_product(cleaned_input)
+
         if self.found_products:
             count_products = len(self.found_products)
             print(f"Found {count_products} products")
@@ -486,12 +495,19 @@ class AppController:
             text = f"Viewing product {number}/{count_products}"
             self.info_bar.destination_label.configure(text=text)
             self.update_previews()
+            self.update_product_nav_buttons()
             return self.found_products[self.current_product]
+        self.info_bar.destination_label.configure(text="No products found")
+        self.update_product_nav_buttons()
         pass
 
     def change_product(self, data):
-        self.current_product += data
-        if self.found_products and len(self.found_products) >= self.current_product:
+        if not self.found_products:
+            self.update_product_nav_buttons()
+            return
+        count_products = len(self.found_products)
+        self.current_product = max(0, min(self.current_product + data, count_products - 1))
+        if count_products > 0:
             count_products = len(self.found_products)
             print(self.found_products[self.current_product])
             self.info_bar.selected_button_label.configure(text=self.found_products[self.current_product]['name'] + " (id: "+ str(self.found_products[self.current_product]['id'])+")" )
@@ -500,7 +516,17 @@ class AppController:
             text = f"Viewing product {number}/{count_products}"
             self.info_bar.destination_label.configure(text=text)
             self.update_previews()
+            self.update_product_nav_buttons()
         pass
+
+    def update_product_nav_buttons(self):
+        if not getattr(self.info_bar, "next_button", None) or not getattr(self.info_bar, "prev_button", None):
+            return
+        total = len(self.found_products) if self.found_products else 0
+        can_prev = total > 0 and self.current_product > 0
+        can_next = total > 0 and self.current_product < (total - 1)
+        self.info_bar.prev_button.configure(state="normal" if can_prev else "disabled")
+        self.info_bar.next_button.configure(state="normal" if can_next else "disabled")
 
     def update_info(self, selected_option):
         """
@@ -559,6 +585,7 @@ class AppController:
                 self.info_bar.parent_frame, text="No products found"
             )
             self.info_bar.destination_label.grid(row=2, column=0, columnspan=2, padx=5, pady=5, sticky="w")
+            self.update_product_nav_buttons()
 
         elif selected_option == "file":
             self.info_bar.description_label.configure(text="Choose a file to process:")
