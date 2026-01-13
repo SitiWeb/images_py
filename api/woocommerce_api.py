@@ -88,6 +88,7 @@ def get_wcapi():
         consumer_key=active_credentials["consumer_key"],
         consumer_secret=active_credentials["consumer_secret"],
         version="wc/v3",
+        timeout=30,
     )
 
 
