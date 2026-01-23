@@ -1,6 +1,12 @@
 import os
+import tempfile
 from wand.image import Image
 from wand.color import Color
+
+try:
+    from PIL import Image as PILImage
+except Exception:  # Pillow is also used elsewhere; keep this optional here.
+    PILImage = None
 
 class ImageProcessor:
     def __init__(self, canvas_width=900, canvas_height=900, background_color="transparent", image_size="fit"):
@@ -48,7 +54,20 @@ class ImageProcessor:
         image_path = os.path.normpath(image_path)
         output_path = os.path.normpath(output_path)
 
-        with Image(filename=image_path) as img:
+        converted_tmp_path = None
+        img = None
+        try:
+            try:
+                img = Image(filename=image_path)
+            except Exception as e:
+                # Wand/ImageMagick AVIF support depends on the installed ImageMagick build.
+                # If it can't read AVIF, fall back to Pillow (+ pillow-avif-plugin) and convert to PNG.
+                if os.path.splitext(image_path)[1].lower() != ".avif":
+                    raise
+                converted_tmp_path = self._convert_avif_to_temp_png(image_path, log)
+                img = Image(filename=converted_tmp_path)
+                self.log_message(f"Opened AVIF via Pillow fallback: {image_path}", log)
+
             self.log_message(f"Original image size: {img.width}x{img.height}", log)
             if self.image_size == "contain":
                 self._contain(img)
@@ -71,6 +90,41 @@ class ImageProcessor:
                 # Save the image to the final output path
                 canvas.save(filename=final_output_path)
                 self.log_message(f"Saved to: {final_output_path}", log)
+        finally:
+            try:
+                if img is not None:
+                    img.close()
+            finally:
+                if converted_tmp_path and os.path.exists(converted_tmp_path):
+                    try:
+                        os.remove(converted_tmp_path)
+                    except Exception:
+                        pass
+
+
+    def _convert_avif_to_temp_png(self, image_path, log=None):
+        if PILImage is None:
+            raise RuntimeError(
+                "AVIF input requires Pillow. Install Pillow + pillow-avif-plugin to enable AVIF decoding."
+            )
+
+        try:
+            import pillow_avif  # type: ignore
+        except Exception:
+            raise RuntimeError(
+                "AVIF input requires the optional dependency 'pillow-avif-plugin'. "
+                "Install it with: pip install pillow-avif-plugin"
+            )
+
+        with PILImage.open(image_path) as im:
+            # Preserve alpha if present; Wand will composite onto the selected background.
+            if im.mode not in ("RGB", "RGBA"):
+                im = im.convert("RGBA")
+            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+            tmp.close()
+            im.save(tmp.name, format="PNG")
+            self.log_message(f"Converted AVIF to temporary PNG: {tmp.name}", log)
+            return tmp.name
 
 
     def _cover(self, img:Image):

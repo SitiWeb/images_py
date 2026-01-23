@@ -12,6 +12,12 @@ Prerequisites
 
     pip install pillow
 
+    Optional (AVIF input): Install the Pillow AVIF plugin so previews and conversions can open `.avif` files:
+
+    sh
+
+    pip install pillow-avif-plugin
+
     Additional Libraries: Ensure you have any additional libraries your utility functions (file_operations, image_processing) depend on.
 
 Application Setup

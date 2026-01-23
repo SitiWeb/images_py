@@ -6,6 +6,12 @@ from ui.options_window import OptionsWindow
 from config.encrypt_config import ConfigEncryptor
 from api.woocommerce_api import get_first_image
 from PIL import Image, ImageTk
+
+# Enable AVIF support for Pillow previews when the optional plugin is installed.
+try:
+    import pillow_avif  # type: ignore
+except Exception:
+    pillow_avif = None
 from pprint import pformat
 from api.woocommerce_api import process_product_images, process_all_products, search_product, get_first_image_path, get_product
 import customtkinter as ctk
