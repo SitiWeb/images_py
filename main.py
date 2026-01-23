@@ -1,8 +1,10 @@
 """
 Main module for the Image Processor application.
 """
-from PIL import Image
+from PIL import Image, ImageTk
 import customtkinter as ctk
+import os
+import sys
 from ui.menu import MenuBar  # Import the new MenuBar class
 from ui.log_frame import LogWindow
 from ui.button_frame import ButtonFrame
@@ -13,6 +15,15 @@ from config.encrypt_config import ConfigEncryptor
 from controller import AppController
 
 from ui.preview_frame import PreviewFrame  # Import the new PreviewFrame class
+
+
+def resource_path(relative_path: str) -> str:
+    """Get absolute path to a resource (dev or PyInstaller)."""
+    try:
+        base_path = sys._MEIPASS  # type: ignore[attr-defined]
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 
 
@@ -33,6 +44,23 @@ class ImageProcessorApp:
         self.root = root
         self.root.title("Image Processor")
         self.root.geometry("553x800")
+
+        # Window/taskbar icon (Windows prefers .ico)
+        try:
+            ico_path = resource_path("ui/images/image_processor.ico")
+            if os.path.exists(ico_path):
+                self.root.iconbitmap(ico_path)
+        except Exception:
+            pass
+
+        # Cross-platform icon (uses PNG)
+        try:
+            png_path = resource_path("ui/images/image_processor.png")
+            if os.path.exists(png_path):
+                self._icon_photo = ImageTk.PhotoImage(Image.open(png_path))
+                self.root.iconphoto(True, self._icon_photo)
+        except Exception:
+            pass
 
         # Initialize the controller
         self.controller = AppController(self.root)

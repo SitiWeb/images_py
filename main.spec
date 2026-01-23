@@ -3,8 +3,12 @@ import glob
 import os
 # -*- mode: python ; coding: utf-8 -*-
 
-# Collect all PNG and JPG images in the ui/images directory
-image_files = [(file, "ui/images") for file in glob.glob("ui/images/*.*") if file.endswith(('.png', '.jpg', '.jpeg'))]
+# Collect UI images/icons in the ui/images directory
+image_files = [
+    (file, "ui/images")
+    for file in glob.glob("ui/images/*.*")
+    if file.lower().endswith((".png", ".jpg", ".jpeg", ".ico"))
+]
 
 block_cipher = None
 
@@ -33,13 +37,15 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='main',
+    name='image_processor',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
+
+    icon='ui/images/image_processor.ico',
   
     disable_windowed_traceback=False,
     argv_emulation=False,
