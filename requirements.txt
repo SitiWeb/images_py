@@ -5,10 +5,17 @@ cryptography==46.0.3
 customtkinter==5.2.2
 darkdetect==0.8.0
 idna==3.11
+jaraco.classes==3.4.0
+jaraco.context==6.1.0
+jaraco.functools==4.4.0
+keyring==25.7.0
+more-itertools==10.8.0
 packaging==26.0
 pillow==12.1.0
 pillow-avif-plugin==1.5.5
+platformdirs==4.5.1
 pycparser==3.0
+pywin32-ctypes==0.2.3
 requests==2.32.5
 urllib3==2.6.3
 Wand==0.6.13

@@ -1,14 +1,18 @@
 import customtkinter as ctk
 from api.woocommerce_api import (
     load_credentials,
-    save_active_credential_set,
 )
 from config.encrypt_config import ConfigEncryptor
+from tkinter import messagebox
 from PIL import Image, ImageTk
+
+import threading
+import webbrowser
+
+from utils.update_checker import UpdateCheckError, check_for_update, get_current_version
 
 import os
 import sys
-KEY = b"u4xTBY5Ns4WYdLvqMjEr138mpMmDEhhqTszKCcDy2cI="
 def resource_path(relative_path):
     """ Get the absolute path to a resource, whether we're running in development or a PyInstaller package. """
     try:
@@ -24,7 +28,7 @@ class SettingsTab:
         self.tab = ctk.CTkFrame(tab_parent)
         self.tab.grid(row=0, column=0, sticky="nsew")
          # Initialize an instance of ConfigEncryptor
-        self.config_encryptor = ConfigEncryptor(KEY)  # Ensure you pass any required arguments in the constructor if necessary
+        self.config_encryptor = ConfigEncryptor()  # per-user storage + legacy migration
         config = self.config_encryptor.load_config()
         self.credentials_list = []
         if config:
@@ -119,6 +123,59 @@ class SettingsTab:
         )
         delete_button.grid(row=7, column=2, columnspan=1, pady=10)
 
+        # --- App updates ---
+        self._current_version = get_current_version()
+        self._version_var = ctk.StringVar(value=f"Version: {self._current_version}")
+        self._update_status_var = ctk.StringVar(value="")
+
+        version_label = ctk.CTkLabel(self.tab, textvariable=self._version_var)
+        version_label.grid(row=8, column=0, columnspan=2, padx=5, pady=(15, 5), sticky="w")
+
+        check_update_button = ctk.CTkButton(
+            self.tab,
+            width=140,
+            text="Check updates",
+            command=self.check_updates,
+        )
+        check_update_button.grid(row=8, column=2, columnspan=2, padx=5, pady=(15, 5), sticky="w")
+
+        update_status_label = ctk.CTkLabel(self.tab, textvariable=self._update_status_var)
+        update_status_label.grid(row=9, column=0, columnspan=4, padx=5, pady=(0, 10), sticky="w")
+
+    def check_updates(self):
+        self._update_status_var.set("Checking GitHub for updates...")
+        threading.Thread(target=self._check_updates_worker, daemon=True).start()
+
+    def _check_updates_worker(self):
+        try:
+            info = check_for_update("SitiWeb", "images_py", current_version=self._current_version)
+        except (UpdateCheckError, Exception) as exc:
+            self.tab.after(0, lambda: self._on_update_check_failed(str(exc)))
+            return
+
+        self.tab.after(0, lambda: self._on_update_check_complete(info))
+
+    def _on_update_check_failed(self, error_message: str):
+        self._update_status_var.set("Update check failed.")
+        messagebox.showerror("Update check failed", error_message)
+
+    def _on_update_check_complete(self, info):
+        self._update_status_var.set(f"Latest: {info.latest_tag} (current: {info.current_version})")
+
+        if not info.update_available:
+            messagebox.showinfo(
+                "No updates",
+                f"You're up to date.\n\nCurrent: {info.current_version}\nLatest: {info.latest_tag}",
+            )
+            return
+
+        open_release = messagebox.askyesno(
+            "Update available",
+            f"A newer version is available.\n\nCurrent: {info.current_version}\nLatest: {info.latest_tag}\n\nOpen the release page?",
+        )
+        if open_release and info.html_url:
+            webbrowser.open(info.html_url)
+
     def create_credentials_form(self, credentials, row_index):
         settings_options = {
             "url": {
@@ -187,13 +244,15 @@ class SettingsTab:
             "active": True,
         }
 
-        ConfigEncryptor(KEY).save_credentials(credentials)
-        save_active_credential_set(credentials["name"])
+        ConfigEncryptor().save_credentials(credentials)
 
-        self.credentials_list.append(credentials)
+        # Reload from storage to avoid duplicates and to reflect the active flag updates.
+        config = ConfigEncryptor().load_config() or {}
+        self.credentials_list = config.get("credentials", []) or []
         self.credential_dropdown.configure(
             values=[cred.get("nice_name", "Unnamed Credential") for cred in self.credentials_list]
         )
+        self.credential_var.set(credentials.get("nice_name", "Default"))
 
     def add_new_credential_set(self):
         self.active_credential_set = {
@@ -218,7 +277,7 @@ class SettingsTab:
         ]
 
         # Save updated credentials list to storage
-        ConfigEncryptor(KEY).delete_credentials(selected_name)
+        ConfigEncryptor().delete_credentials(selected_name)
 
         # Update the dropdown and form after deletion
         if self.credentials_list:

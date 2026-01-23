@@ -5,38 +5,12 @@ import tempfile
 import requests
 from tkinter import messagebox
 from woocommerce import API
-from cryptography.fernet import Fernet
 from utils.image_processing import ImageProcessor
 from config.encrypt_config import ConfigEncryptor
 from utils.file_operations import FileProcessor
 import hashlib
 import pprint
-CREDENTIALS_FILE = "credentials.json"
 
-# Hardcoded key (replace with your generated key)
-KEY = b"u4xTBY5Ns4WYdLvqMjEr138mpMmDEhhqTszKCcDy2cI="
-
-def save_active_credential_set(active_set_name):
-    """
-    Update the active credential set in the saved credentials file.
-
-    Args:
-        active_set_name (str): The name of the active credential set.
-    """
-    if not os.path.exists(CREDENTIALS_FILE):
-        return
-
-    with open(CREDENTIALS_FILE, 'r+') as file:
-        data = json.load(file)
-        
-        # Find the credential set and mark it as active
-        for cred in data.get('credentials', []):
-            cred['active'] = (cred['name'] == active_set_name)
-        
-        # Rewrite the updated data back to the file
-        file.seek(0)
-        json.dump(data, file, indent=4)
-        file.truncate()
 
 
 def save_credentials(url, consumer_key, consumer_secret, username, password):
@@ -58,7 +32,7 @@ def save_credentials(url, consumer_key, consumer_secret, username, password):
         "password": password,
     }
 
-    ConfigEncryptor(KEY).save_credentials(consumer_key, consumer_secret, username, password)
+    ConfigEncryptor().save_credentials(credentials)
 
 
 def load_credentials():
@@ -68,7 +42,7 @@ def load_credentials():
     Returns:
         dict: The decrypted credentials, or None if the file does not exist.
     """
-    creds = ConfigEncryptor(KEY).load_credentials()
+    creds = ConfigEncryptor().load_credentials()
     return creds
 
 
@@ -80,7 +54,14 @@ def get_wcapi():
         woocommerce.API: The WooCommerce API client instance, or None if credentials are missing.
     """
     active_credentials = load_credentials()
- 
+
+    if not active_credentials:
+        messagebox.showerror(
+            "Missing credentials",
+            "No active credentials found. Please configure them in Settings first.",
+        )
+        return None
+
     pprint.pprint(active_credentials)
 
     return API(

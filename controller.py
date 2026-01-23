@@ -29,7 +29,6 @@ class AppController:
         Args:
             root (ctk.CTk): The root CustomTkinter window.
         """
-        key = b"u4xTBY5Ns4WYdLvqMjEr138mpMmDEhhqTszKCcDy2cI="
         self.root = root
         self.file = FileProcessor()
         self.image = ImageProcessor()
@@ -46,7 +45,7 @@ class AppController:
         self.background_color = "#000000"
         self.image_format = "AUTO"
         self.image_size = "contain"
-        self.config = ConfigEncryptor(key)
+        self.config = ConfigEncryptor()
         self.type = None
         self.destination_path = None
         self.found_products = None
@@ -474,7 +473,6 @@ class AppController:
         self.apply_canvas_size()
         self.apply_background_color()
         self.apply_image_size()
-        key = b"u4xTBY5Ns4WYdLvqMjEr138mpMmDEhhqTszKCcDy2cI="
         self.config.save_options(self.get_options())
         self.update_previews()
 

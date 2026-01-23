@@ -10,8 +10,6 @@ from ui.log_frame import LogWindow
 from ui.button_frame import ButtonFrame
 from ui.frame_info import InfoFrame
 from ui.settings_tab import SettingsTab
-from config.decrypt_config import ConfigDecryptor, DECRYPTION_KEY
-from config.encrypt_config import ConfigEncryptor
 from controller import AppController
 
 from ui.preview_frame import PreviewFrame  # Import the new PreviewFrame class
@@ -153,24 +151,6 @@ class ImageProcessorApp:
 
 
 if __name__ == "__main__":
-    try:
-        decryptor = ConfigEncryptor(DECRYPTION_KEY)
-        # Load the active credentials
-        config = decryptor.load_credentials()
-        print(config)
-        if config:
-            wc_url = config.get("url", "")
-            wc_consumer_key = config.get("consumer_key", "")
-            wc_consumer_secret = config.get("consumer_secret", "")
-            wp_username = config.get("username", "")
-            wp_password = config.get("password", "")
-        else:
-            print("No active credentials found.")
-    except FileNotFoundError as e:
-        print(f"File not found: {e}")
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
     root = ctk.CTk()
     ctk.set_appearance_mode("dark")
     ctk.set_default_color_theme("blue")

@@ -54,6 +54,20 @@ sh
 
 python main.py
 
+Configuration & Credentials Storage
+
+This app now stores data per-user (recommended for desktop apps):
+
+- Options are stored as JSON under your user config directory (Windows example):
+    - `%LOCALAPPDATA%\images_py\Image Processor\options.json`
+- Credentials are stored in the OS keychain (Windows Credential Manager) under the service name:
+    - `images_py.image_processor`
+
+Legacy migration:
+
+- If a legacy `config.enc` is present in the project folder (or next to the exe), it is decrypted using the old key,
+    migrated into the per-user storage, and the legacy `config.enc` is removed.
+
 Creating an Executable
 
 To create an executable for this application, you can use pyinstaller. Follow the steps below:
