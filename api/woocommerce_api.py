@@ -395,8 +395,6 @@ def search_product(search):
     page = 1
     total_products = 0  # Initialize the counter for total products
 
-    log = options.get("log_message", None)
-
     while True:
         products = wcapi.get("products", params={"per_page": 100, "page": page, "search": search}).json()
         if not products:
@@ -416,6 +414,7 @@ def process_all_products(options):
 
     page = 1
     total_products = 0  # Initialize the counter for total products
+    log = options.get("log_message", None)
 
     while True:
         products = wcapi.get("products", params={"per_page": 100, "page": page}).json()
